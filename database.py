@@ -1,5 +1,5 @@
 """
-ERPlite - Database Connection Module
+QERP - Database Connection Module
 Provides PostgreSQL connection pooling and utility functions.
 """
 import psycopg2
@@ -23,7 +23,7 @@ def init_db_pool():
                 20,  # maxconn
                 host=os.getenv('DB_HOST', 'localhost'),
                 port=os.getenv('DB_PORT', '5432'),
-                database=os.getenv('DB_NAME', 'erplite'),
+                database=os.getenv('DB_NAME', 'qerp'),
                 user=os.getenv('DB_USER', 'postgres'),
                 password=os.getenv('DB_PASSWORD', '')
             )
