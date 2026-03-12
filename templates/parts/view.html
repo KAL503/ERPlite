@@ -1,0 +1,168 @@
+{% extends "base.html" %}
+
+{% block title %}{{ part.customer_part_number }} - QERP{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('parts.list_parts') }}">Parts</a></li>
+                <li class="breadcrumb-item active">{{ part.customer_part_number }}</li>
+            </ol>
+        </nav>
+        <h1><i class="bi bi-box-seam"></i> {{ part.customer_part_number }}</h1>
+        <p class="text-muted">
+            <strong>{{ part.customer_code }}</strong> - {{ part.company_name }}
+        </p>
+    </div>
+    <div class="col-md-4 text-end">
+        {% if current_user.can_create_work_orders() %}
+        <a href="{{ url_for('parts.edit_part', part_id=part.part_id) }}" class="btn btn-secondary">
+            <i class="bi bi-pencil"></i> Edit
+        </a>
+        <a href="{{ url_for('parts.add_revision', part_id=part.part_id) }}" class="btn btn-primary">
+            <i class="bi bi-file-earmark-plus"></i> Add Revision
+        </a>
+        {% endif %}
+        <a href="{{ url_for('parts.list_parts') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Back
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-info-circle"></i> Part Details</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-sm">
+                    <tr>
+                        <th width="35%">Part Number:</th>
+                        <td><strong>{{ part.customer_part_number }}</strong></td>
+                    </tr>
+                    <tr>
+                        <th>Description:</th>
+                        <td>{{ part.description or '-' }}</td>
+                    </tr>
+                    <tr>
+                        <th>Material:</th>
+                        <td>{{ part.material or '-' }}</td>
+                    </tr>
+                    <tr>
+                        <th>Finish:</th>
+                        <td>{{ part.finish or '-' }}</td>
+                    </tr>
+                    <tr>
+                        <th>Status:</th>
+                        <td>
+                            {% if part.active %}
+                                <span class="badge bg-success">Active</span>
+                            {% else %}
+                                <span class="badge bg-secondary">Inactive</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Created By:</th>
+                        <td>{{ part.created_by_name or '-' }}</td>
+                    </tr>
+                </table>
+                {% if part.notes %}
+                <div class="mt-3">
+                    <strong>Notes:</strong>
+                    <p class="mt-2">{{ part.notes }}</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-file-earmark-text"></i> Revisions</h5>
+            </div>
+            <div class="card-body">
+                {% if revisions %}
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Revision</th>
+                                <th>Effective Date</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for rev in revisions %}
+                            <tr>
+                                <td><strong>{{ rev.revision_level }}</strong></td>
+                                <td>{{ rev.effective_date }}</td>
+                                <td>
+                                    {% if rev.is_current %}
+                                        <span class="badge bg-success">Current</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">Superseded {{ rev.superseded_date }}</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted">No revisions yet. 
+                    {% if current_user.can_create_work_orders() %}
+                        <a href="{{ url_for('parts.add_revision', part_id=part.part_id) }}">Add the first revision</a>
+                    {% endif %}
+                </p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-3">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-file-earmark-text"></i> Recent Work Orders</h5>
+            </div>
+            <div class="card-body">
+                {% if recent_work_orders %}
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover">
+                        <thead>
+                            <tr>
+                                <th>WO Number</th>
+                                <th>Revision</th>
+                                <th>Qty</th>
+                                <th>Status</th>
+                                <th>Due Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for wo in recent_work_orders %}
+                            <tr>
+                                <td><strong>{{ wo.work_order_number }}</strong></td>
+                                <td>{{ wo.revision_level }}</td>
+                                <td>{{ wo.quantity_ordered }}</td>
+                                <td><span class="badge bg-info">{{ wo.status|replace('_', ' ')|title }}</span></td>
+                                <td>{{ wo.production_due_date }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted">No work orders yet for this part.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
