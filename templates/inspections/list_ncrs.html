@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+
+{% block title %}NCRs - QERP{% endblock %}
+
+{% block content %}
+
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h1><i class="bi bi-file-earmark-x"></i> Non-Conformance Reports (NCRs)</h1>
+    </div>
+    <div class="col-md-4 text-end">
+        <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-house"></i> Dashboard
+        </a>
+    </div>
+</div>
+
+<!-- Filter Tabs -->
+<ul class="nav nav-tabs mb-3">
+    <li class="nav-item">
+        <a class="nav-link {% if status_filter == 'open' %}active{% endif %}" 
+           href="{{ url_for('inspections.list_ncrs', status='open') }}">
+            Open
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link {% if status_filter == 'disposition_pending' %}active{% endif %}" 
+           href="{{ url_for('inspections.list_ncrs', status='disposition_pending') }}">
+            Disposition Pending
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link {% if status_filter == 'closed' %}active{% endif %}" 
+           href="{{ url_for('inspections.list_ncrs', status='closed') }}">
+            Closed
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link {% if status_filter == 'all' %}active{% endif %}" 
+           href="{{ url_for('inspections.list_ncrs', status='all') }}">
+            All
+        </a>
+    </li>
+</ul>
+
+{% if ncrs %}
+<div class="card">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>NCR #</th>
+                        <th>Work Order</th>
+                        <th>Part Number</th>
+                        <th>Qty</th>
+                        <th>Source</th>
+                        <th>Initiated</th>
+                        <th>Disposition</th>
+                        <th>Status</th>
+                        <th class="table-actions">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for ncr in ncrs %}
+                    <tr>
+                        <td><strong>{{ ncr.ncr_number }}</strong></td>
+                        <td>{{ ncr.work_order_number or '—' }}</td>
+                        <td>{{ ncr.part_number }}</td>
+                        <td><span class="text-danger">{{ ncr.quantity_nonconforming }}</span></td>
+                        <td>{{ ncr.source|replace('_', ' ')|title }}</td>
+                        <td>
+                            {{ ncr.initiated_at.strftime('%m/%d/%Y') }}<br>
+                            <small class="text-muted">{{ ncr.initiated_by_initials }}</small>
+                        </td>
+                        <td>
+                            {% if ncr.disposition %}
+                                <span class="badge bg-primary">{{ ncr.disposition|replace('_', ' ')|title }}</span>
+                            {% else %}
+                                <span class="text-muted">—</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if ncr.status == 'open' %}
+                                <span class="badge bg-danger">Open</span>
+                            {% elif ncr.status == 'disposition_pending' %}
+                                <span class="badge bg-warning text-dark">Pending</span>
+                            {% elif ncr.status == 'closed' %}
+                                <span class="badge bg-success">Closed</span>
+                            {% else %}
+                                <span class="badge bg-secondary">{{ ncr.status }}</span>
+                            {% endif %}
+                        </td>
+                        <td class="table-actions">
+                            <a href="{{ url_for('inspections.view_ncr', ncr_id=ncr.ncr_id) }}" 
+                               class="btn btn-sm btn-primary">
+                                <i class="bi bi-eye"></i> View
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% else %}
+<div class="alert alert-info">
+    <i class="bi bi-info-circle"></i>
+    No NCRs found with status: <strong>{{ status_filter }}</strong>
+</div>
+{% endif %}
+
+{% endblock %}
