@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+
+{% block title %}{{ ncr.ncr_number }} - QERP{% endblock %}
+
+{% block content %}
+
+<div class="row mb-3">
+    <div class="col">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('inspections.list_ncrs') }}">NCRs</a></li>
+                <li class="breadcrumb-item active">{{ ncr.ncr_number }}</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<!-- Status Header -->
+<div class="card mb-3">
+    <div class="card-header d-flex justify-content-between align-items-center
+        {% if ncr.status == 'open' %}bg-danger text-white
+        {% elif ncr.status == 'disposition_pending' %}bg-warning text-dark
+        {% elif ncr.status == 'closed' %}bg-success text-white
+        {% endif %}">
+        <h4 class="mb-0">
+            <i class="bi bi-file-earmark-x"></i>
+            {{ ncr.ncr_number }}
+        </h4>
+        <h5 class="mb-0">
+            <span class="badge 
+                {% if ncr.status == 'open' %}bg-light text-dark
+                {% elif ncr.status == 'disposition_pending' %}bg-dark
+                {% elif ncr.status == 'closed' %}bg-light text-dark
+                {% endif %}">
+                {{ ncr.status|replace('_', ' ')|upper }}
+            </span>
+        </h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <h6 class="text-muted">NCR Information</h6>
+                <p class="mb-1"><strong>NCR Number:</strong> {{ ncr.ncr_number }}</p>
+                <p class="mb-1"><strong>Work Order:</strong> {{ ncr.work_order_number }}</p>
+                <p class="mb-1"><strong>Part Number:</strong> {{ ncr.part_number }}</p>
+                <p class="mb-1"><strong>Source:</strong> {{ ncr.source|replace('_', ' ')|title }}</p>
+                <p class="mb-1"><strong>Qty Nonconforming:</strong> <span class="text-danger">{{ ncr.quantity_nonconforming }}</span></p>
+            </div>
+            <div class="col-md-6">
+                <h6 class="text-muted">Dates & People</h6>
+                <p class="mb-1"><strong>Initiated:</strong> {{ ncr.initiated_at.strftime('%m/%d/%Y %I:%M %p') }} by {{ ncr.initiated_by_name }} ({{ ncr.initiated_by_initials }})</p>
+                {% if ncr.disposition_at %}
+                <p class="mb-1"><strong>Disposition Set:</strong> {{ ncr.disposition_at.strftime('%m/%d/%Y %I:%M %p') }} by {{ ncr.disposition_by_name }} ({{ ncr.disposition_by_initials }})</p>
+                {% endif %}
+                {% if ncr.closed_at %}
+                <p class="mb-1"><strong>Closed:</strong> {{ ncr.closed_at.strftime('%m/%d/%Y %I:%M %p') }} by {{ ncr.closed_by_name }}</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Description -->
+<div class="card mb-3">
+    <div class="card-header">
+        <h5 class="mb-0">Description of Nonconformance</h5>
+    </div>
+    <div class="card-body">
+        <pre class="mb-0" style="white-space: pre-wrap; font-family: inherit;">{{ ncr.description }}</pre>
+    </div>
+</div>
+
+<!-- Disposition (if set) -->
+{% if ncr.disposition %}
+<div class="card mb-3 border-primary">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0">Disposition: {{ ncr.disposition|replace('_', ' ')|upper }}</h5>
+    </div>
+    <div class="card-body">
+        {% if ncr.disposition_notes %}
+        <p class="mb-0">{{ ncr.disposition_notes }}</p>
+        {% else %}
+        <p class="text-muted mb-0">No disposition notes provided.</p>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+
+<!-- Set Disposition (Quality Manager only) -->
+{% if can_set_disposition and not ncr.disposition %}
+<div class="card mb-3">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0">Set Disposition (Quality Manager)</h5>
+    </div>
+    <div class="card-body">
+        <form method="POST" action="{{ url_for('inspections.set_ncr_disposition', ncr_id=ncr.ncr_id) }}">
+            <div class="mb-3">
+                <label for="disposition" class="form-label required-field">Disposition</label>
+                <select class="form-select" id="disposition" name="disposition" required>
+                    <option value="">Select disposition...</option>
+                    <option value="rework">Rework</option>
+                    <option value="use_as_is">Use As-Is</option>
+                    <option value="npf">NPF (Notify Planner/Foreman)</option>
+                    <option value="customer_waiver">Customer Waiver</option>
+                    <option value="scrap">Scrap</option>
+                    <option value="rtv">RTV (Return to Vendor)</option>
+                </select>
+            </div>
+            <div class="mb-3">
+                <label for="disposition_notes" class="form-label">Disposition Notes</label>
+                <textarea class="form-control" id="disposition_notes" name="disposition_notes" rows="3"
+                          placeholder="Explain the disposition decision..."></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary">
+                <i class="bi bi-check-circle"></i> Set Disposition
+            </button>
+        </form>
+    </div>
+</div>
+{% endif %}
+
+<!-- Close NCR (Quality Manager only) -->
+{% if can_set_disposition and ncr.disposition and ncr.status != 'closed' %}
+<div class="card mb-3">
+    <div class="card-header bg-success text-white">
+        <h5 class="mb-0">Close NCR</h5>
+    </div>
+    <div class="card-body">
+        <p>Disposition has been set. Close this NCR to release the work order from hold.</p>
+        <form method="POST" action="{{ url_for('inspections.close_ncr', ncr_id=ncr.ncr_id) }}"
+              onsubmit="return confirm('Close this NCR and release work order from hold?')">
+            <button type="submit" class="btn btn-success">
+                <i class="bi bi-check-circle-fill"></i> Close NCR
+            </button>
+        </form>
+    </div>
+</div>
+{% endif %}
+
+<div class="mt-3">
+    <a href="{{ url_for('inspections.list_ncrs') }}" class="btn btn-secondary">
+        <i class="bi bi-arrow-left"></i> Back to NCR List
+    </a>
+    {% if ncr.work_order_number %}
+    <a href="{{ url_for('work_orders.view_work_order', work_order_id=ncr.work_order_id) }}" class="btn btn-outline-secondary">
+        <i class="bi bi-file-earmark-text"></i> View Work Order
+    </a>
+    {% endif %}
+</div>
+
+{% endblock %}
