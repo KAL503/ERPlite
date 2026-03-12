@@ -1,0 +1,178 @@
+{% extends "base.html" %}
+
+{% block title %}{% if user %}Edit User{% else %}New User{% endif %} - QERP{% endblock %}
+
+{% block content %}
+
+<div class="row mb-4">
+    <div class="col">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('users.list_users') }}">Users</a></li>
+                <li class="breadcrumb-item active">{% if user %}Edit User{% else %}New User{% endif %}</li>
+            </ol>
+        </nav>
+        <h1><i class="bi bi-person"></i> {% if user %}Edit User{% else %}Create New User{% endif %}</h1>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <form method="POST">
+                    
+                    <!-- Username (only for new users) -->
+                    {% if not user %}
+                    <div class="mb-3">
+                        <label for="username" class="form-label required-field">Username</label>
+                        <input type="text" class="form-control" id="username" name="username" 
+                               value="{{ form_data.get('username', '') if form_data else '' }}" 
+                               required>
+                        <small class="text-muted">Login username (cannot be changed after creation)</small>
+                    </div>
+                    {% else %}
+                    <div class="mb-3">
+                        <label class="form-label">Username</label>
+                        <input type="text" class="form-control" value="{{ user.username }}" disabled>
+                        <small class="text-muted">Username cannot be changed</small>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Password -->
+                    <div class="mb-3">
+                        <label for="{% if user %}new_password{% else %}password{% endif %}" class="form-label {% if not user %}required-field{% endif %}">
+                            {% if user %}New Password (leave blank to keep current){% else %}Password{% endif %}
+                        </label>
+                        <input type="password" class="form-control" 
+                               id="{% if user %}new_password{% else %}password{% endif %}" 
+                               name="{% if user %}new_password{% else %}password{% endif %}" 
+                               {% if not user %}required{% endif %}>
+                        <small class="text-muted">Minimum 6 characters</small>
+                    </div>
+                    
+                    <!-- Full Name -->
+                    <div class="mb-3">
+                        <label for="full_name" class="form-label required-field">Full Name</label>
+                        <input type="text" class="form-control" id="full_name" name="full_name" 
+                               value="{{ form_data.get('full_name', '') if form_data else '' }}" 
+                               required>
+                    </div>
+                    
+                    <!-- Role -->
+                    <div class="mb-3">
+                        <label for="role" class="form-label required-field">Role</label>
+                      <select class="form-select" id="role" name="role" required>
+    <option value="">Select role...</option>
+    <option value="owner" {% if form_data and form_data.get('role') == 'owner' %}selected{% endif %}>
+        Owner (Full Access)
+    </option>
+    <option value="quality_manager" {% if form_data and form_data.get('role') == 'quality_manager' %}selected{% endif %}>
+        Quality Manager
+    </option>
+    <option value="operations_manager" {% if form_data and form_data.get('role') == 'operations_manager' %}selected{% endif %}>
+        Operations Manager
+    </option>
+    <option value="admin" {% if form_data and form_data.get('role') == 'admin' %}selected{% endif %}>
+        Admin
+    </option>
+    <option value="inspector" {% if form_data and form_data.get('role') == 'inspector' %}selected{% endif %}>
+        Inspector
+    </option>
+    <option value="machinist" {% if form_data and form_data.get('role') == 'machinist' %}selected{% endif %}>
+        Machinist
+    </option>
+    <option value="assembly" {% if form_data and form_data.get('role') == 'assembly' %}selected{% endif %}>
+        Assembly
+    </option>
+</select>
+                    </div>
+                    
+                    
+                    <!-- Initials -->
+                    <div class="mb-3">
+                        <label for="initials" class="form-label">Initials (Optional)</label>
+                        <input type="text" class="form-control" id="initials" name="initials" 
+                               value="{{ form_data.get('initials', '') if form_data else '' }}"
+                               maxlength="4" style="text-transform: uppercase;">
+                        <small class="text-muted">2-4 letters (e.g., JD, ABC). Shown on shop floor operations.</small>
+                    </div>
+                    
+                    <!-- Active Status -->
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="active" name="active"
+                               {% if not form_data or form_data.get('active', True) %}checked{% endif %}>
+                        <label class="form-check-label" for="active">
+                            Active (user can log in)
+                        </label>
+                    </div>
+                    
+                    <!-- Submit -->
+                    <div class="border-top pt-3 mt-4">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle"></i> {% if user %}Update User{% else %}Create User{% endif %}
+                        </button>
+                        <a href="{{ url_for('users.list_users') }}" class="btn btn-secondary">
+                            <i class="bi bi-x-circle"></i> Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Role Info Sidebar -->
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="bi bi-info-circle"></i> Role Permissions</h6>
+            </div>
+           <div class="card-body">
+    <p class="small mb-2"><strong>Owner / Quality Manager / Operations Manager:</strong></p>
+    <ul class="small">
+        <li>Full system access</li>
+        <li>All operations</li>
+        <li>Reports & analytics</li>
+    </ul>
+
+    <p class="small mb-2 mt-3"><strong>Admin:</strong></p>
+    <ul class="small">
+        <li>Create work orders</li>
+        <li>Manage parts/customers</li>
+        <li>Outside service coordination</li>
+        <li>Reports</li>
+    </ul>
+
+    <p class="small mb-2 mt-3"><strong>Inspector:</strong></p>
+    <ul class="small">
+        <li>Quality & finishing operations</li>
+        <li>All inspection types</li>
+        <li>NCR management</li>
+    </ul>
+
+    <p class="small mb-2 mt-3"><strong>Machinist:</strong></p>
+    <ul class="small">
+        <li>Machining operations only</li>
+    </ul>
+
+    <p class="small mb-2 mt-3"><strong>Assembly:</strong></p>
+    <ul class="small">
+        <li>Assembly operations</li>
+        <li>Receiving/triage inspection</li>
+    </ul>
+</div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Auto-uppercase initials
+document.getElementById('initials').addEventListener('input', function(e) {
+    this.value = this.value.toUpperCase();
+});
+</script>
+{% endblock %}
