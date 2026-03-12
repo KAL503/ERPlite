@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+
+{% block title %}Create NCR - QERP{% endblock %}
+
+{% block content %}
+
+<div class="row mb-3">
+    <div class="col">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('shop_floor.my_operations') }}">Shop Floor</a></li>
+                <li class="breadcrumb-item active">Create NCR</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<div class="alert alert-danger">
+    <h5><i class="bi bi-exclamation-triangle-fill"></i> Inspection Failed - NCR Required</h5>
+    <p class="mb-0">This inspection failed. Please complete the NCR (Non-Conformance Report) below. The work order will be placed on hold until the NCR is resolved.</p>
+</div>
+
+<div class="card mb-3">
+    <div class="card-header">
+        <h5 class="mb-0">Failed Inspection Details</h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <p class="mb-1"><strong>WO #:</strong> {{ inspection.work_order_number }}</p>
+                <p class="mb-1"><strong>Part:</strong> {{ inspection.customer_part_number }} Rev {{ inspection.revision_level }}</p>
+                <p class="mb-1"><strong>Operation:</strong> <code>{{ inspection.operation_code }}</code> {{ inspection.operation_description }}</p>
+            </div>
+            <div class="col-md-6">
+                <p class="mb-1"><strong>Inspection Type:</strong> {{ inspection.inspection_type|replace('_', ' ')|title }}</p>
+                <p class="mb-1"><strong>Qty Inspected:</strong> {{ inspection.quantity_inspected }}</p>
+                <p class="mb-1"><strong>Qty Failed:</strong> <span class="text-danger">{{ inspection.quantity_failed }}</span></p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<form method="POST">
+    <div class="card">
+        <div class="card-header bg-danger text-white">
+            <h5 class="mb-0">
+                <i class="bi bi-file-earmark-x"></i>
+                Non-Conformance Report
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="quantity_nonconforming" class="form-label required-field">Quantity Nonconforming</label>
+                        <input type="number" class="form-control" id="quantity_nonconforming" 
+                               name="quantity_nonconforming" min="1" 
+                               value="{{ inspection.quantity_failed }}" required>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="source" class="form-label required-field">Source</label>
+                        <select class="form-select" id="source" name="source" required>
+                            <option value="in_process">In-Process</option>
+                            <option value="receiving">Receiving</option>
+                            <option value="final_inspection">Final Inspection</option>
+                            <option value="customer_return">Customer Return</option>
+                            <option value="supplier">Supplier</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mb-3">
+                <label for="description" class="form-label required-field">Description of Nonconformance</label>
+                <textarea class="form-control" id="description" name="description" rows="5" required
+                          placeholder="Describe the nonconformance in detail:&#10;- Which dimensions/characteristics are out of spec?&#10;- What are the actual measurements vs. nominal?&#10;- Any other relevant details from the CMM report?"></textarea>
+                <small class="text-muted">
+                    <i class="bi bi-info-circle"></i>
+                    Be specific. Reference CMM report characteristics (e.g., "Item_13.1 measured 10.4377, nominal 10.2000, tolerance ±0.2540 - EXCEEDS tolerance by 0.2377")
+                </small>
+            </div>
+            
+            <div class="alert alert-warning">
+                <strong>Next Steps:</strong>
+                <ul class="mb-0">
+                    <li>NCR will be created and assigned a number (NCR-YYYY-NNNN)</li>
+                    <li>Work order operations will be placed on HOLD</li>
+                    <li>Quality Manager will review and set disposition</li>
+                    <li>Disposition options: Rework, Use-as-is, Scrap, Return to Vendor, Customer Waiver</li>
+                </ul>
+            </div>
+        </div>
+        <div class="card-footer">
+            <button type="submit" class="btn btn-danger">
+                <i class="bi bi-file-earmark-x"></i> Create NCR
+            </button>
+            <a href="{{ url_for('shop_floor.my_operations') }}" class="btn btn-secondary">
+                <i class="bi bi-x-circle"></i> Cancel
+            </a>
+        </div>
+    </div>
+</form>
+
+{% endblock %}
