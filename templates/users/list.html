@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+
+{% block title %}User Management - QERP{% endblock %}
+
+{% block content %}
+
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h1><i class="bi bi-people"></i> User Management</h1>
+        <p class="text-muted">Manage system users and roles</p>
+    </div>
+    <div class="col-md-4 text-end">
+        <a href="{{ url_for('users.create_user') }}" class="btn btn-primary">
+            <i class="bi bi-person-plus"></i> Add New User
+        </a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Full Name</th>
+                        <th>Username</th>
+                        <th>Role</th>
+                        <th>Email</th>
+                        <th>Initials</th>
+                        <th>Status</th>
+                        <th>Created</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in users %}
+                    <tr {% if not user.active %}class="table-secondary"{% endif %}>
+                        <td>
+                            <strong>{{ user.full_name }}</strong>
+                            {% if user.user_id == current_user.user_id %}
+                                <span class="badge 
+    {% if user.role == 'owner' %}bg-danger
+    {% elif user.role in ('quality_manager', 'operations_manager') %}bg-primary
+    {% elif user.role == 'admin' %}bg-info
+    {% elif user.role == 'inspector' %}bg-warning text-dark
+    {% else %}bg-secondary
+    {% endif %}">
+    {{ user.role|replace('_', ' ')|title }}
+</span>
+                        </td>
+                        <td>{{ user.email or '—' }}</td>
+                        <td><strong>{{ user.initials or '—' }}</strong></td>
+                        <td>
+                            {% if user.active %}
+                                <span class="badge bg-success">Active</span>
+                            {% else %}
+                                <span class="badge bg-secondary">Inactive</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ user.created_at.strftime('%Y-%m-%d') if user.created_at else '—' }}</td>
+                        <td class="table-actions">
+                            <a href="{{ url_for('users.edit_user', user_id=user.user_id) }}" 
+                               class="btn btn-sm btn-outline-primary"
+                               title="Edit User">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                            {% if user.user_id != current_user.user_id %}
+                            <form method="POST" 
+                                  action="{{ url_for('users.toggle_active', user_id=user.user_id) }}" 
+                                  style="display: inline;"
+                                  onsubmit="return confirm('{% if user.active %}Deactivate{% else %}Activate{% endif %} {{ user.full_name }}?');">
+                                <button type="submit" 
+                                        class="btn btn-sm {% if user.active %}btn-outline-warning{% else %}btn-outline-success{% endif %}"
+                                        title="{% if user.active %}Deactivate{% else %}Activate{% endif %} User">
+                                    <i class="bi bi-{% if user.active %}pause-circle{% else %}play-circle{% endif %}"></i>
+                                </button>
+                            </form>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="card mt-3">
+    <div class="card-body">
+    <h6>Role Descriptions:</h6>
+    <ul class="mb-0">
+        <li><strong>Owner / Quality Manager / Operations Manager:</strong> Full system access, all permissions</li>
+        <li><strong>Admin:</strong> Create WOs, manage parts/customers, outside service coordination, reports</li>
+        <li><strong>Inspector:</strong> Quality operations, all inspection types, NCR management</li>
+        <li><strong>Machinist:</strong> Machining operations only</li>
+        <li><strong>Assembly:</strong> Assembly operations and receiving/triage inspection</li>
+    </ul>
+</div>
+</div>
+
+{% endblock %}
